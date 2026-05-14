@@ -1,15 +1,14 @@
 """
-Mini-examen blanc APDS-9960 -- Capteur APDS + REST
+Mini-examen blanc VCNL4200 -- Capteur VCNL + REST
 Cours 243-413-SH
 
-
-Valeur principale envoyée : luminosité (Clear)
-Valeur secondaire envoyée : rouge (R)
+Valeur principale envoyée : proximite (≈ 4200)
+Valeur secondaire envoyée : luminosite (lux)
 """
 
 import time
 import board
-import adafruit_apds9960.apds9960
+import adafruit_vcnl4040
 import requests
 
 # =============================================================================
@@ -22,7 +21,11 @@ TIMEOUT_HTTP = 2.0
 
 PERIODE_LECTURE = 0.5
 DUREE_STABLE_REQUISE = 3.0
-DELTA_STABILITE = 20.0        # amplitude luminosité max-min tolérée
+
+# Le VCNL retourne souvent ~4200 quand un objet est proche.
+# Une variation stable raisonnable = ±200
+DELTA_STABILITE = 200
+
 PERIODE_MIN_ENTRE_POSTS = 5.0
 TAILLE_HISTORIQUE = 16
 
@@ -32,26 +35,24 @@ TAILLE_HISTORIQUE = 16
 # =============================================================================
 
 def initialiser_capteur():
-    """Initialise le bus I2C et le capteur APDS-9960."""
+    """Initialise le bus I2C et le capteur VCNL."""
     try:
         i2c = board.I2C()
-        capteur = adafruit_apds9960.apds9960.APDS9960(i2c)
-        capteur.enable_color = True
+        capteur = adafruit_vcnl4040.VCNL4040(i2c)
         return capteur
     except Exception:
-        print("Impossible d'initialiser le capteur APDS-9960")
+        print("Impossible d'initialiser le capteur VCNL4200")
         return None
 
 
 def lire_capteur(capteur):
-    """Lit (luminosite, rouge) du APDS-9960."""
+    """Lit (proximite, luminosite) du VCNL."""
     try:
-        r, g, b, c = capteur.color_data
-        luminosite = float(c)
-        rouge = float(r)
-        return luminosite, rouge
+        proximite = float(capteur.proximity)   # typiquement ~4200
+        luminosite = float(capteur.lux)
+        return proximite, luminosite
     except Exception:
-        print("Lecture du capteur APDS impossible")
+        print("Lecture du capteur VCNL impossible")
         return 0.0, 0.0
 
 
@@ -77,14 +78,14 @@ def verifier_sante(base_url):
 
 
 def envoyer_mesure(base_url, valeur, duree_stable, secondaire):
-    """POST /evaluer avec payload JSON (adapté APDS, sans temperature)."""
+    """POST /evaluer avec payload JSON (adapté VCNL4200)."""
     try:
         url = base_url + "/evaluer"
 
         payload = {
-            "valeur": float(valeur),          # luminosité Clear
+            "valeur": float(valeur),          # proximite
             "duree_stable": float(duree_stable),
-            "secondaire": float(secondaire),  # rouge (R)
+            "secondaire": float(secondaire),  # luminosite
             "student_id": STUDENT_ID
         }
 
@@ -117,10 +118,10 @@ def est_stable(historique, delta_max):
     return (valeur_max - valeur_min) <= delta_max
 
 
-def afficher(luminosite, rouge, duree_stable, derniere_decision):
- 
-    print("L=", round(luminosite, 1), "lux", end=" | ")
-    print("R=", round(rouge, 1), end=" | ")
+def afficher(proximite, luminosite, duree_stable, derniere_decision):
+    """Affiche une ligne console rafraîchie."""
+    print("P=", round(proximite, 1), end=" | ")
+    print("Lux=", round(luminosite, 1), end=" | ")
     print("stable=", round(duree_stable, 1), "s", end=" | ")
     print("decision=", derniere_decision, end="\r")
 
@@ -141,9 +142,9 @@ def boucle_principale(capteur, base_url):
             dernier_temps_lecture = maintenant
 
             try:
-                luminosite, rouge = lire_capteur(capteur)
+                proximite, luminosite = lire_capteur(capteur)
 
-                historique.append(luminosite)
+                historique.append(proximite)
                 if len(historique) > TAILLE_HISTORIQUE:
                     historique.pop(0)
 
@@ -159,16 +160,16 @@ def boucle_principale(capteur, base_url):
                     if maintenant - dernier_post >= PERIODE_MIN_ENTRE_POSTS:
                         decision = envoyer_mesure(
                             base_url,
-                            luminosite,
+                            proximite,
                             duree_stable,
-                            rouge
+                            luminosite
                         )
                         dernier_post = maintenant
 
                         if decision is not None:
                             derniere_decision = decision
 
-                afficher(luminosite, rouge, duree_stable, derniere_decision)
+                afficher(proximite, luminosite, duree_stable, derniere_decision)
 
             except:
                 print("\nErreur pendant la boucle")
@@ -185,18 +186,19 @@ def main():
     try:
         capteur = initialiser_capteur()
         if capteur is None:
-            print("Impossible d'initialiser le capteur APDS-9960.")
+            print("Impossible d'initialiser le capteur VCNL4200.")
             return
 
         if not verifier_sante(BASE_URL):
             print("Le serveur ne répond pas (GET /sante).")
             return
 
-        #print("Capteur OK, serveur OK. Début de la boucle...\n")
+
 
         boucle_principale(capteur, BASE_URL)
 
     except KeyboardInterrupt:
+
         print("Fermeture propre du programme.")
 
 
