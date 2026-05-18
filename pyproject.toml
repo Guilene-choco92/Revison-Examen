@@ -1,0 +1,23 @@
+[project]
+name = "examen-final-aht20-formatif"
+version = "0.1.0"
+description = "Formatif FINAL-AHT20 -- Capteur AHT20 + decision REST (243-413-SH)"
+# IMPORTANT : Python 3.11 EXACTEMENT (version par defaut du
+# Raspberry Pi OS Bookworm). Le module aide.pyc fourni est un
+# bytecode Python 3.11 et ne s'importera PAS sous une autre
+# version mineure. Voir .python-version + README.md.
+requires-python = "==3.11.*"
+dependencies = [
+    "adafruit-blinka>=8.0",
+    "adafruit-circuitpython-ahtx0>=1.0",
+    "requests>=2.31",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

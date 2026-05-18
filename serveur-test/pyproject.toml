@@ -1,0 +1,8 @@
+[project]
+name = "serveur-test-formatif-aht20"
+version = "0.1.0"
+description = "Serveur de test local pour le formatif FINAL-AHT20 (243-413-SH). Bytecode compile pour ne pas reveler les seuils."
+requires-python = "==3.11.*"
+dependencies = [
+    "flask>=3.0",
+]
