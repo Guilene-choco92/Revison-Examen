@@ -281,9 +281,9 @@ def main():
             print("Le serveur ne repond pas (GET /sante).")
             return
 
-        #print("Capteur OK, serveur OK. Debut de la boucle...\n")
+        
 
-        # Boucle principale
+     
         boucle_principale(capteur, BASE_URL)
     except KeyboardInterrupt:
         print("Fermeture propre du programme.")
