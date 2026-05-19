@@ -2,8 +2,8 @@
 Mini-examen blanc VCNL4200 -- Capteur VCNL + REST
 Cours 243-413-SH
 
-Valeur principale envoyée : proximite (≈ 4200)
-Valeur secondaire envoyée : luminosite (lux)
+Valeur principale envoyée : proximite 
+Valeur secondaire envoyée : luminosite 
 """
 
 import time
@@ -21,9 +21,6 @@ TIMEOUT_HTTP = 2.0
 
 PERIODE_LECTURE = 0.5
 DUREE_STABLE_REQUISE = 3.0
-
-# Le VCNL retourne souvent ~4200 quand un objet est proche.
-# Une variation stable raisonnable = ±200
 DELTA_STABILITE = 200
 
 PERIODE_MIN_ENTRE_POSTS = 5.0
@@ -48,7 +45,7 @@ def initialiser_capteur():
 def lire_capteur(capteur):
     """Lit (proximite, luminosite) du VCNL."""
     try:
-        proximite = float(capteur.proximity)   # typiquement ~4200
+        proximite = float(capteur.proximity) 
         luminosite = float(capteur.lux)
         return proximite, luminosite
     except Exception:
